@@ -5,6 +5,7 @@ import json
 from time import sleep
 import sys
 import os
+import argparse
 
 retry_count = 5
 
@@ -115,86 +116,82 @@ def list_scenes():
     for name, _ in scenes.items():
         print(name)
 
+def list_groups():
+    for name, _ in lighting_groups.items():
+        print(name)
+
 # TODO: List groups
 
-def print_help():
-    print(f"Usage: python {sys.argv[0]} <device> <action> [args]\n\n"
-           "        device state <on/off>\n"
-           "        device dimmer <dimmer>\n"
-           "        device rgb <r> <g> <b> [dimmer]\n"
-           "        device temp <temp> [dimmer]\n"
-           "        device scene <scene> [dimmer]\n"
-           "        device status\n\n"
-           "        list devices\n"
-           "        list scenes\n")
+def print_help(parser):
+    parser.print_help()
     sys.exit(1)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print_help()
-    if sys.argv[1] == "list":
-        if sys.argv[2] == "devices":
+    parser = argparse.ArgumentParser(description="Control Wiz lights")
+    subparsers = parser.add_subparsers(dest="command")
+
+    list_parser = subparsers.add_parser("list", help="List devices or scenes")
+    list_parser.add_argument("type", choices=["devices", "scenes", "groups"], help="Type to list")
+
+    device_parser = subparsers.add_parser("control", help="Control a device")
+    device_parser.add_argument("name", help="Device name")
+    device_parser.add_argument("action", choices=["state", "dimmer", "rgb", "temp", "scene", "status"], help="Action to perform")
+    device_parser.add_argument("params", nargs="*", help="Parameters for the action")
+
+    args = parser.parse_args()
+
+    if args.command == "list":
+        if args.type == "devices":
             list_devices()
-            sys.exit(0)
-        elif sys.argv[2] == "scenes":
+        elif args.type == "scenes":
             list_scenes()
-            sys.exit(0)
+        elif args.type == "groups":
+            list_groups()
         else:
-            print_help()
+            print_help(parser)
 
-    elif len(sys.argv) > 2:
+    elif args.command == "control":
+        if args.name not in devices:
+            print_help(parser)
 
-        if sys.argv[2] == "state":
-            if len(sys.argv) < 4:
-                print_help()
-            if sys.argv[1] not in devices:
-                print_help()
-            if sys.argv[3] not in ["on", "off"]:
-                print_help()
-            if sys.argv[3] == "on":
-                set_light_state(devices[sys.argv[1]]['ip'], True)
-            elif sys.argv[3] == "off":
-                set_light_state(devices[sys.argv[1]]['ip'], False)
-            else:
-                print_help()
+        if args.action == "state":
+            if len(args.params) != 1 or args.params[0] not in ["on", "off"]:
+                print_help(parser)
+            state = args.params[0] == "on"
+            set_light_state(devices[args.name]['ip'], state)
 
-        elif sys.argv[2] == "dimmer":
-            if sys.argv[1] not in devices:
-                print_help()
-            if len(sys.argv) < 4:
-                print_help()
-            set_light_dimming(devices[sys.argv[1]]['ip'], int(sys.argv[3]))
+        elif args.action == "dimmer":
+            if len(args.params) != 1:
+                print_help(parser)
+            set_light_dimming(devices[args.name]['ip'], int(args.params[0]))
 
-        elif sys.argv[2] == "rgb":
-            if sys.argv[1] not in devices:
-                print_help()
-            if len(sys.argv) < 6:
-                print_help()
-            dimmer = 100 if len(sys.argv) == 6 else int(sys.argv[6])
-            set_light_rgb(devices[sys.argv[1]]['ip'], int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), dimmer)
+        elif args.action == "rgb":
+            if len(args.params) < 3 or len(args.params) > 4:
+                print_help(parser)
+            r, g, b = map(int, args.params[:3])
+            dimming = int(args.params[3]) if len(args.params) == 4 else 100
+            set_light_rgb(devices[args.name]['ip'], r, g, b, dimming)
 
-        elif sys.argv[2] == "temp":
-            if sys.argv[1] not in devices:
-                print_help()
-            dimmer = 100 if len(sys.argv) == 4 else int(sys.argv[4])
-            set_light_temp(devices[sys.argv[1]]['ip'], int(sys.argv[3]), dimmer)
+        elif args.action == "temp":
+            if len(args.params) < 1 or len(args.params) > 2:
+                print_help(parser)
+            temp = int(args.params[0])
+            dimming = int(args.params[1]) if len(args.params) == 2 else 100
+            set_light_temp(devices[args.name]['ip'], temp, dimming)
 
-        elif sys.argv[2] == "scene":
-            if sys.argv[3] not in scenes:
-                print_help()
-            dimmer = 100 if len(sys.argv) == 4 else int(sys.argv[4])
-            set_light_scene(devices[sys.argv[1]]['ip'], scenes[sys.argv[3]], dimmer)
-        
-        elif sys.argv[2] == "status":
-            if sys.argv[1] not in devices:
-                print_help()
-            
-            status = get_light_status(devices[sys.argv[1]]['ip'])
-            
+        elif args.action == "scene":
+            if len(args.params) < 1 or len(args.params) > 2 or args.params[0] not in scenes:
+                print_help(parser)
+            scene_id = scenes[args.params[0]]
+            dimming = int(args.params[1]) if len(args.params) == 2 else 100
+            set_light_scene(devices[args.name]['ip'], scene_id, dimming)
+
+        elif args.action == "status":
+            status = get_light_status(devices[args.name]['ip'])
             print(json.dumps(status, indent=4))
 
         else:
-            print_help()
+            print_help(parser)
 
     else:
-        print_help()
+        print_help(parser)
