@@ -1,9 +1,17 @@
 import pystray
 from PIL import Image, ImageDraw
 import threading
+import os
+
+import ctypes # For Windows
 
 import wiz_control
 from wiz_control import devices, scenes, lighting_groups
+
+# Set process name for Windows
+ctypes.windll.kernel32.SetConsoleTitleW("WiZ Control")
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 icon = None
 
@@ -21,12 +29,12 @@ def set_state(devices_list, state):
 
 def set_scene(devices_list, scene_id):
     for device in devices_list:
-        wiz_control.set_light_scene(devices[device]['ip'], scene_id)
+        result_code = wiz_control.set_light_scene(devices[device]['ip'], scene_id)
         test_result_code(result_code, device.replace('_', ' ').title())
 
 # Load light bulb image for the system tray icon
 def create_light_bulb_image(height, width):
-    image = Image.open("light_bulb.png")
+    image = Image.open(os.path.join(script_dir, "light_bulb.png"))
     #image = image.resize((width, height))
     return image
 

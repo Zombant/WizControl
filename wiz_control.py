@@ -4,11 +4,16 @@ import socket
 import json
 from time import sleep
 import sys
+import os
 
 retry_count = 5
 
+# Path to the settings.json file
+script_dir = os.path.dirname(os.path.abspath(__file__))
+settings_path = os.path.join(script_dir, "settings.json")
+
 # Import IP addresses from json file
-with open("settings.json", "r") as f:
+with open(settings_path, "r") as f:
     data = json.load(f)
     devices = data["devices"]
     lighting_groups = data["lighting_groups"]
