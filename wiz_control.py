@@ -6,8 +6,10 @@ from time import sleep
 import sys
 
 # Import IP addresses from json file
-with open("ip_addresses.json", "r") as f:
-    ip_addresses = dict(json.load(f))
+with open("settings.json", "r") as f:
+    data = json.load(f)
+    ip_addresses = data["ip_addresses"]
+    lighting_groups = data["lighting_groups"]
 
 scenes = {
     "cozy": 6,
@@ -21,7 +23,8 @@ scenes = {
     "tv_time": 18,
     "plant_growth": 19 }
 
-    
+# TODO: Create/modify/delete lighting groups
+# TODO: Create/modify/delete devices
 
 def send_command(message, ip, port=38899, retries=5):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -96,6 +99,8 @@ def list_devices():
 def list_scenes():
     for name, _ in scenes.items():
         print(name)
+
+# TODO: List groups
 
 def print_help():
     print(f"Usage: python {sys.argv[0]} <device> <action> [args]\n\n"
