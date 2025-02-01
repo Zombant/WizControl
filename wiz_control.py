@@ -8,7 +8,7 @@ import sys
 # Import IP addresses from json file
 with open("settings.json", "r") as f:
     data = json.load(f)
-    ip_addresses = data["ip_addresses"]
+    devices = data["devices"]
     lighting_groups = data["lighting_groups"]
 
 scenes = {
@@ -93,7 +93,7 @@ def get_light_status(ip):
     return send_command(message, ip)
 
 def list_devices():
-    for name, _ in ip_addresses.items():
+    for name, _ in devices.items():
         print(name)
 
 def list_scenes():
@@ -131,42 +131,42 @@ if __name__ == "__main__":
         if sys.argv[2] == "state":
             if len(sys.argv) < 4:
                 print_help()
-            if sys.argv[1] not in ip_addresses:
+            if sys.argv[1] not in devices:
                 print_help()
             if sys.argv[3] not in ["on", "off"]:
                 print_help()
             if sys.argv[3] == "on":
-                set_light_state(ip_addresses[sys.argv[1]], True)
+                set_light_state(devices[sys.argv[1]]['ip'], True)
             elif sys.argv[3] == "off":
-                set_light_state(ip_addresses[sys.argv[1]], False)
+                set_light_state(devices[sys.argv[1]]['ip'], False)
             else:
                 print_help()
 
         elif sys.argv[2] == "rgb":
-            if sys.argv[1] not in ip_addresses:
+            if sys.argv[1] not in devices:
                 print_help()
             if len(sys.argv) < 6:
                 print_help()
             dimmer = 100 if len(sys.argv) == 6 else int(sys.argv[6])
-            set_light_rgb(ip_addresses[sys.argv[1]], int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), dimmer)
+            set_light_rgb(devices[sys.argv[1]]['ip'], int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), dimmer)
 
         elif sys.argv[2] == "temp":
-            if sys.argv[1] not in ip_addresses:
+            if sys.argv[1] not in devices:
                 print_help()
             dimmer = 100 if len(sys.argv) == 4 else int(sys.argv[4])
-            set_light_temp(ip_addresses[sys.argv[1]], int(sys.argv[3]), dimmer)
+            set_light_temp(devices[sys.argv[1]]['ip'], int(sys.argv[3]), dimmer)
 
         elif sys.argv[2] == "scene":
             if sys.argv[3] not in scenes:
                 print_help()
             dimmer = 100 if len(sys.argv) == 4 else int(sys.argv[4])
-            set_light_scene(ip_addresses[sys.argv[1]], scenes[sys.argv[3]], dimmer)
+            set_light_scene(devices[sys.argv[1]]['ip'], scenes[sys.argv[3]], dimmer)
         
         elif sys.argv[2] == "status":
-            if sys.argv[1] not in ip_addresses:
+            if sys.argv[1] not in devices:
                 print_help()
             
-            status = get_light_status(ip_addresses[sys.argv[1]])
+            status = get_light_status(devices[sys.argv[1]]['ip'])
             
             print(json.dumps(status, indent=4))
 
