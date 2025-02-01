@@ -5,6 +5,8 @@ import json
 from time import sleep
 import sys
 
+retry_count = 5
+
 # Import IP addresses from json file
 with open("settings.json", "r") as f:
     data = json.load(f)
@@ -26,7 +28,7 @@ scenes = {
 # TODO: Create/modify/delete lighting groups
 # TODO: Create/modify/delete devices
 
-def send_command(message, ip, port=38899, retries=5):
+def send_command(message, ip, port=38899, retries=retry_count):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(1)
     
@@ -39,11 +41,11 @@ def send_command(message, ip, port=38899, retries=5):
             print(f"Timeout occurred, retrying... ({attempt + 1}/{retries})", file=sys.stderr)
         except Exception as e:
             print(f"Error sending command: {e}", file=sys.stderr)
-            return None
+            return 1
 
     sock.close()
-    print(f"Failed to send command after {retries} retries", file=sys.stderr)
-    return None
+    print(f"Failed to send command after {retries} attempts", file=sys.stderr)
+    return 2
         
 
 def set_light_state(ip, state):
@@ -52,7 +54,7 @@ def set_light_state(ip, state):
         "params": {"state": state}
     }
 
-    send_command(message, ip)
+    return send_command(message, ip)
     
 
 def set_light_rgb(ip, r, g, b, dimming=100):
@@ -64,7 +66,7 @@ def set_light_rgb(ip, r, g, b, dimming=100):
                     "dimming": dimming}
     }
     
-    send_command(message, ip)
+    return send_command(message, ip)
 
 def set_light_temp(ip, temp, dimming=100):
     message = {
@@ -73,7 +75,7 @@ def set_light_temp(ip, temp, dimming=100):
                     "dimming": dimming}
     }
     
-    send_command(message, ip)
+    return send_command(message, ip)
 
 def set_light_scene(ip, scene_id, dimming=100):
     message = {
@@ -82,7 +84,7 @@ def set_light_scene(ip, scene_id, dimming=100):
                     "dimming": dimming}
     }
 
-    send_command(message, ip)
+    return send_command(message, ip)
 
 def get_light_status(ip):
     message = {

@@ -27,8 +27,8 @@
     },
     
     "lighting_groups": {
-        "Living Room": ["living_room_lamp", "living_room_lamp_2"],
-        "Bedroom": ["marble_lamp", "black_lamp", "bookshelf_lamp"],
-        "All": ["marble_lamp", "black_lamp", "bookshelf_lamp", "living_room_lamp", "living_room_lamp_2"]
+        "living_room": ["living_room_lamp", "living_room_lamp_2"],
+        "bedroom": ["marble_lamp", "black_lamp", "bookshelf_lamp"],
+        "all": ["marble_lamp", "black_lamp", "bookshelf_lamp", "living_room_lamp", "living_room_lamp_2"]
     }
 }

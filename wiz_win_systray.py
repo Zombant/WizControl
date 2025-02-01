@@ -5,13 +5,24 @@ import threading
 import wiz_control
 from wiz_control import devices, scenes, lighting_groups
 
+icon = None
+
+def test_result_code(result_code, title):
+    global icon
+    if result_code == 1:
+        icon.notify(f"Error sending command", title)
+    if result_code == 2:
+        icon.notify(f"Failed to send command after {wiz_control.retry_count} attempts", title)
+
 def set_state(devices_list, state):
     for device in devices_list:
-        wiz_control.set_light_state(devices[device]['ip'], state)
+        result_code = wiz_control.set_light_state(devices[device]['ip'], state)
+        test_result_code(result_code, device.replace('_', ' ').title())
 
 def set_scene(devices_list, scene_id):
     for device in devices_list:
         wiz_control.set_light_scene(devices[device]['ip'], scene_id)
+        test_result_code(result_code, device.replace('_', ' ').title())
 
 # Load light bulb image for the system tray icon
 def create_light_bulb_image(height, width):
@@ -21,19 +32,19 @@ def create_light_bulb_image(height, width):
 
 # Helper function to create a menu item for a scene for a group
 def create_group_scene_menu_item(group, scene):
-    return pystray.MenuItem(scene, lambda: set_scene(lighting_groups[group], scenes[scene]))
+    return pystray.MenuItem(scene.replace('_', ' ').title(), lambda: set_scene(lighting_groups[group], scenes[scene]))
 
 # Helper function to create a menu item for a scene for a device
 def create_device_scene_menu_item(device, scene):
     if devices[device]['type'] == 'light':
-        return pystray.MenuItem(scene, lambda: set_scene([device], scenes[scene])) 
+        return pystray.MenuItem(scene.replace('_', ' ').title(), lambda: set_scene([device], scenes[scene])) 
 
 # Helper function to create a menu item for a lighting group
 def create_group_menu_item(group):
-    return pystray.MenuItem(group, pystray.Menu(
-        pystray.MenuItem(f"{group} On", lambda: set_state(lighting_groups[group], True)),
-        pystray.MenuItem(f"{group} Off", lambda: set_state(lighting_groups[group], False)),
-        pystray.MenuItem(f"{group} Scene", pystray.Menu(
+    return pystray.MenuItem(group.replace('_', ' ').title(), pystray.Menu(
+        pystray.MenuItem(f"{group.replace('_', ' ').title()} On", lambda: set_state(lighting_groups[group], True)),
+        pystray.MenuItem(f"{group.replace('_', ' ').title()} Off", lambda: set_state(lighting_groups[group], False)),
+        pystray.MenuItem(f"{group.replace('_', ' ').title()} Scene", pystray.Menu(
             *[create_group_scene_menu_item(group, scene) for scene in scenes]
         ))
     ))
@@ -41,16 +52,17 @@ def create_group_menu_item(group):
 # Helper function to create a menu item for a device
 def create_device_menu_item(device):
     menu = []
-    menu.append(pystray.MenuItem(f"{device} On", lambda: set_state([device], True)))
-    menu.append(pystray.MenuItem(f"{device} Off", lambda: set_state([device], False)))
+    menu.append(pystray.MenuItem(f"{device.replace('_', ' ').title()} On", lambda: set_state([device], True)))
+    menu.append(pystray.MenuItem(f"{device.replace('_', ' ').title()} Off", lambda: set_state([device], False)))
     if devices[device]['type'] == 'light':
-        menu.append(pystray.MenuItem(f"{device} Scene", pystray.Menu(
+        menu.append(pystray.MenuItem(f"{device.replace('_', ' ').title()} Scene", pystray.Menu(
             *[create_device_scene_menu_item(device, scene) for scene in scenes]
         )))
-    return pystray.MenuItem(device, pystray.Menu(*menu))
+    return pystray.MenuItem(device.replace('_', ' ').title(), pystray.Menu(*menu))
 
 # Function to setup the system tray icon
 def setup_tray():
+    global icon
     icon = pystray.Icon("WiZControl")
     icon.title = "WiZ Control"
     icon.icon = create_light_bulb_image(64, 64)
