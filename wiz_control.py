@@ -91,6 +91,14 @@ def set_light_scene(ip, scene_id, dimming=100):
 
     return send_command(message, ip)
 
+def set_light_dimming(ip, dimming):
+    message = {
+        "method": "setPilot",
+        "params": { "dimming": dimming }
+    }
+
+    return send_command(message, ip)
+
 def get_light_status(ip):
     message = {
         "method": "getPilot",
@@ -112,6 +120,7 @@ def list_scenes():
 def print_help():
     print(f"Usage: python {sys.argv[0]} <device> <action> [args]\n\n"
            "        device state <on/off>\n"
+           "        device dimmer <dimmer>\n"
            "        device rgb <r> <g> <b> [dimmer]\n"
            "        device temp <temp> [dimmer]\n"
            "        device scene <scene> [dimmer]\n"
@@ -149,6 +158,13 @@ if __name__ == "__main__":
             else:
                 print_help()
 
+        elif sys.argv[2] == "dimmer":
+            if sys.argv[1] not in devices:
+                print_help()
+            if len(sys.argv) < 4:
+                print_help()
+            set_light_dimming(devices[sys.argv[1]]['ip'], int(sys.argv[3]))
+
         elif sys.argv[2] == "rgb":
             if sys.argv[1] not in devices:
                 print_help()
@@ -176,6 +192,9 @@ if __name__ == "__main__":
             status = get_light_status(devices[sys.argv[1]]['ip'])
             
             print(json.dumps(status, indent=4))
+
+        else:
+            print_help()
 
     else:
         print_help()
